@@ -1,8 +1,8 @@
-      subroutine ODE(t,Nx,Ny,beta,gamma,ro,TS,dke,dsigma)
+      subroutine ODE(t,Nx,Ny,Nc,beta,gamma,ro,cells)
       
       implicit none
       double precision t
-      integer Nx, Ny,i,j
+      integer Nx, Ny,Nc,i,j
 
       double precision beta(Nx,Ny),gamma(Nx,Ny),ro(Nx,Ny)
       double precision beta0(Nx,Ny),gamma0(Nx,Ny),ro0(Nx,Ny)
@@ -12,8 +12,9 @@
       double precision betak4(Nx,Ny),gammak4(Nx,Ny),rok4(Nx,Ny)
       double precision betak5(Nx,Ny),gammak5(Nx,Ny),rok5(Nx,Ny)
       double precision b1(Nx,Ny),g1(Nx,Ny),r1(Nx,Ny)
-      double precision dke(Nx,Ny),dsigma(Nx,Ny)
-      double precision TS(Nx,Ny), vdx(Nx,Ny), vdy(Nx,Ny)
+      double precision vdx(Nx,Ny), vdy(Nx,Ny)
+      double precision cells(Nc,2)
+      integer grid(Nx,Ny)
 
       double precision dL1,dL2,dk,dc,dalpha,depsilon,depsilonp,
      .               dlambda1,dlambda2,s1,s2,vd,tend,tout,dt,tE,
@@ -34,7 +35,9 @@
       h=dt
       call flow(t,Nx,Ny,vdx,vdy)
 
- 13   do j=1,Ny
+ 13   call FromCellToGrid(Nx,Ny,Nc,cells,grid)
+
+      do j=1,Ny
        do i=1,Nx
         beta0(i,j)=beta(i,j)
         gamma0(i,j)=gamma(i,j)
@@ -43,7 +46,7 @@
       enddo
       iteration=0
 
-      call rs(t,Nx,Ny,beta0,gamma0,ro0,betak1,gammak1,rok1,TS,vdx)
+      call rs(t,Nx,Ny,beta0,gamma0,ro0,betak1,gammak1,rok1,grid,vdx)
 !     Runge-Kutta-Merson Method
 
  16   do j=1,Ny
@@ -54,7 +57,7 @@
        enddo
       enddo
 
-      call rs(t+h/3,Nx,Ny,beta,gamma,ro,betak2,gammak2,rok2,TS,vdx)
+      call rs(t+h/3,Nx,Ny,beta,gamma,ro,betak2,gammak2,rok2,grid,vdx)
 
       do j=1,Ny
        do i=1,Nx
@@ -64,7 +67,7 @@
        enddo
       enddo
 
-      call rs(t+h/3,Nx,Ny,beta,gamma,ro,betak3,gammak3,rok3,TS,vdx)
+      call rs(t+h/3,Nx,Ny,beta,gamma,ro,betak3,gammak3,rok3,grid,vdx)
 
       do j=1,Ny
        do i=1,Nx
@@ -74,7 +77,7 @@
        enddo
       enddo
 
-      call rs(t+h/2,Nx,Ny,beta,gamma,ro,betak4,gammak4,rok4,TS,vdx)
+      call rs(t+h/2,Nx,Ny,beta,gamma,ro,betak4,gammak4,rok4,grid,vdx)
 
        do j=1,Ny
        do i=1,Nx
@@ -87,7 +90,7 @@
        enddo
       enddo
 
-      call rs(t+h,Nx,Ny,beta,gamma,ro,betak5,gammak5,rok5,TS,vdx)
+      call rs(t+h,Nx,Ny,beta,gamma,ro,betak5,gammak5,rok5,grid,vdx)
 
       do j=1,Ny
        do i=1,Nx
@@ -115,7 +118,7 @@
       index=0
       do j=1,Ny
        do i=1,Nx
-       err=max(abs(b1(i,j)),abs(g1(i,j)),abs(r1(i,j)))
+       err=max(abs(b1(i,j)),abs(g1(i,j)),abs(r1(i,j)),err)
       if (beta(i,j) .lt. 0 .or. gamma(i,j) .lt. 0 .or. ro(i,j) .lt. 0)
      . then
       index=1
@@ -142,9 +145,9 @@
 
       t=t+h
       tau=tau+h
-!       if (t .lt. 250) then
-!      call Development(t,Nx,Ny,TS,dke,dsigma)
-!      endif
+
+      call UpdateDiscreteCells(h,Nx,Ny,Nc, gamma, ro, cells)
+
       h=dt
 
       if (tau + h .le. tout+tol*dt) then

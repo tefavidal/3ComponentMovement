@@ -56,13 +56,14 @@
         Phi=(dlambda1+Y*Y)/(dlambda2+Y*Y)
 
 !       Right hand side
-        betaprime(i,j)=factor*5.0*(s1*Phi*dsigma(i,j)-beta(i,j))
+        betaprime(i,j)=factor*(s1*Phi*dsigma(i,j)-beta(i,j))
      .                    /depsilonp
         roprime(i,j)=factor*(-f1*ro(i,j)+f2*(1.d0-ro(i,j)))
-        gammaprime(i,j)=factor2/depsilon*
-     .              (s2*beta(i,j)-dke(i,j)*gamma(i,j))
+
+        gammaprime(i,j)=factor/depsilon*s2*beta(i,j)
+     .             -1.0/depsilon*dke(i,j)*gamma(i,j)
      .                  +depsilon*gLaplace(i,j)
-     .          -  (vdx(i,j)*xgradeC(i,j)+vdy*ygradeC(i,j))
+     .          -  (vdx(i,j)*xgradeC(i,j))
 
        enddo
       enddo
@@ -91,33 +92,59 @@
       double precision gamma(Nx,Ny)
       double precision gLaplace(Nx,Ny),xgradeC(Nx,Ny),ygradeC(Nx,Ny)
       double precision gammaim2,gammaim1,gammaip1,gammajm1,gammajp1
-      double precision gLapX,gLapY,thetai,thetaim1,psii,psiim1
+      double precision gLapX,gLapY,thetai,thetaim1,psii,psiim1, d
+      integer grid(Nx,Ny)
 
-
-
+       d=1.0
+      call Pillars(Nx,Ny,d,grid)
 
       do j=1,Ny
        do i=1,Nx
 !       No-Flux boundary condition
 !       if(i .eq. 1) then
-!        gammaim2=gamma(i+1,j)
-!        gammaim1=gamma(i+1,j)
-!        gammaip1=gamma(i+1,j)
-!
-!!        gammaim2=0
-!!        gammaim1=0
+       if(i .eq. 1 .or. grid(i-1,j) .le. -0.5) then
+        gammaim2=gamma(i+1,j)
+        gammaim1=gamma(i+1,j)
+        gammaip1=gamma(i+1,j)
+
+!        gammaim2=0
+!        gammaim1=0
+
+       elseif(i .eq. 2) then
+        gammaim2=-gamma(i,j)+2*gamma(i-1,j)
+        gammaim1=gamma(i-1,j)
+        gammaip1=gamma(i+1,j)
+
+!        gammaim2=0
+
+!       elseif(i .eq. Nx) then
+       elseif(i .eq. Nx .or. grid(i+1,j) .le. -0.5) then
+        gammaim2=gamma(i-2,j)
+        gammaim1=gamma(i-1,j)
+        gammaip1=gamma(i-1,j)
+       else
+        gammaim2=gamma(i-2,j)
+        gammaim1=gamma(i-1,j)
+        gammaip1=gamma(i+1,j)
+
+       endif
+
+!      Periodic Boundary
+!       if(i .eq. 1) then
+!        gammaim2=gamma(Nx-1,j)
+!        gammaim1=gamma(Nx,j)
+!        gammaip1=gamma(2,j)
 !
 !       elseif(i .eq. 2) then
-!        gammaim2=-gamma(i,j)+2*gamma(i-1,j)
+!        gammaim2=gamma(Nx,j)
 !        gammaim1=gamma(i-1,j)
 !        gammaip1=gamma(i+1,j)
 !
-!!        gammaim2=0
 !
 !       elseif(i .eq. Nx) then
 !        gammaim2=gamma(i-2,j)
 !        gammaim1=gamma(i-1,j)
-!        gammaip1=gamma(i-1,j)
+!        gammaip1=gamma(1,j)
 !       else
 !        gammaim2=gamma(i-2,j)
 !        gammaim1=gamma(i-1,j)
@@ -125,60 +152,39 @@
 !
 !       endif
 
-!      Periodic Boundary
-       if(i .eq. 1) then
-        gammaim2=gamma(Nx-1,j)
-        gammaim1=gamma(Nx,j)
-        gammaip1=gamma(2,j)
-
-       elseif(i .eq. 2) then
-        gammaim2=gamma(Nx,j)
-        gammaim1=gamma(i-1,j)
-        gammaip1=gamma(i+1,j)
-
-
-       elseif(i .eq. Nx) then
-        gammaim2=gamma(i-2,j)
-        gammaim1=gamma(i-1,j)
-        gammaip1=gamma(1,j)
-       else
-        gammaim2=gamma(i-2,j)
-        gammaim1=gamma(i-1,j)
-        gammaip1=gamma(i+1,j)
-
-       endif
-
 
 !     Non Flux Boundary Cond
+       if(Ny .eq. 1) then
+        gammajm1=gamma(i,j)
+        gammajp1=gamma(i,j)
+!       elseif(j .eq. 1) then
+       elseif(j .eq. 1 .or. grid(i,j-1) .le. -0.5) then
+        gammajm1=gamma(i,j+1)
+        gammajp1=gamma(i,j+1)
+!       elseif(j .eq. Ny) then
+       elseif(j .eq. Ny .or. grid(i,j+1) .le. -0.5) then
+        gammajp1=gamma(i,j-1)
+        gammajm1=gamma(i,j-1)
+       else
+        gammajp1=gamma(i,j+1)
+        gammajm1=gamma(i,j-1)
+       endif
+
+!     Periodic Boundary
+!
 !       if(Ny .eq. 1) then
 !        gammajm1=gamma(i,j)
 !        gammajp1=gamma(i,j)
 !       elseif(j .eq. 1) then
-!        gammajm1=gamma(i,j+1)
+!        gammajm1=gamma(i,Ny)
 !        gammajp1=gamma(i,j+1)
 !       elseif(j .eq. Ny) then
-!        gammajp1=gamma(i,j-1)
+!        gammajp1=gamma(i,1)
 !        gammajm1=gamma(i,j-1)
 !       else
 !        gammajp1=gamma(i,j+1)
 !        gammajm1=gamma(i,j-1)
 !       endif
-
-!     Periodic Boundary
-
-       if(Ny .eq. 1) then
-        gammajm1=gamma(i,j)
-        gammajp1=gamma(i,j)
-       elseif(j .eq. 1) then
-        gammajm1=gamma(i,Ny)
-        gammajp1=gamma(i,j+1)
-       elseif(j .eq. Ny) then
-        gammajp1=gamma(i,1)
-        gammajm1=gamma(i,j-1)
-       else
-        gammajp1=gamma(i,j+1)
-        gammajm1=gamma(i,j-1)
-       endif
 
 
         gLapX=(gammaip1+gammaim1-2*gamma(i,j))/(dx**2)

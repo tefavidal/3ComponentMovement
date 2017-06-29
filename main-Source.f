@@ -5,8 +5,10 @@
 
       INTEGER, PARAMETER :: Nx=200
       INTEGER, PARAMETER :: Ny=200
-      INTEGER, PARAMETER :: Nc=15512
-!     Nc decided as Nx*Ny*percentageofcells
+!           ONE PILLAR 40 PERCENT
+      INTEGER, PARAMETER :: Nc=15878
+
+!     Nc decided as (Nx*Ny-Pillars)*percentageofcells
 
       double precision dL1,dL2,dk,dc,dalpha,depsilon,depsilonp,
      .               dlambda1,dlambda2,s1,s2,vd,tend,tout,dt,tE,
@@ -58,29 +60,30 @@
 
 !      if(counter .eq. 65)then
 !          write(6,*) 'Cutting the spiral'
-!      if(mod(counter,30) .eq. 0)then
-!          write(6,*) 'Adding Perturbation'
-!            call FromCellToGrid(Nx,Ny,Nc,cells,grid)
-!!              do j=1,5
-!!                  do i=1,Nx
-!!          do j=(Ny/4-5),(Ny/4+5)
-!!              do i=(Nx/4-5),(Nx/4+5)
-!!         if(((i-(Nx/4))*(i-(Nx/4))+(j-(Ny/4))*(j-(Ny/4))) .le. 25)then
-!!          do j=(Ny/2-5),(Ny/2+5)
-!!              do i=(Nx/2-5),(Nx/2+5)
-!!         if(((i-(Nx/2))*(i-(Nx/2))+(j-(Ny/2))*(j-(Ny/2))) .le. 25)then
-!
-!
-!                    if(grid(i,j) .gt. 0.5)then
-!                        factor=1.0
-!                    else
-!                        factor=0.0
-!                    endif
-!                        gamma(i,j)=grid(i,j)*(gamma01+7)
-!                    endif
-!                  enddo
-!              enddo
-!      endif
+      if(mod(counter,30) .eq. 0)then
+         write(6,*) 'Adding Perturbation'
+         call FromCellToGrid(Nx,Ny,Nc,cells,grid)
+         do j=1,Ny/2
+            do i=1,Nx/2
+!          do j=(Ny/4-5),(Ny/4+5)
+!              do i=(Nx/4-5),(Nx/4+5)
+               if(((i-(Nx/4))*(i-(Nx/4))+(j-(Ny/4))*(j-(Ny/4)))
+     .          .le. 25)then
+!          do j=(Ny/2-5),(Ny/2+5)
+!              do i=(Nx/2-5),(Nx/2+5)
+!         if(((i-(Nx/2))*(i-(Nx/2))+(j-(Ny/2))*(j-(Ny/2))) .le. 25)then
+
+
+                  if(grid(i,j) .gt. 0.5)then
+                     factor=1.0
+                  else
+                     factor=0.0
+                  endif
+                  gamma(i,j)=factor*(gamma01+4)
+               endif
+            enddo
+         enddo
+      endif
 
 
 

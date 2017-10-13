@@ -45,8 +45,10 @@
             beta(i,j)=beta0(1)
             gamma(i,j)=gamma0(1)
             else
-            ro(i,j)=0.0
-            beta(i,j)=0.0
+!            ro(i,j)=0.0
+!            beta(i,j)=0.0
+            ro(i,j)=ro0(1)
+            beta(i,j)=beta0(1)
             gamma(i,j)=0.0
             endif
 
@@ -54,29 +56,27 @@
       enddo
 
 !%%%%%%%%%%%%%%%%%Adding perturbation at the center
-!          do j=1,Ny
-!              do i=2,7
-!          do j=2,7
-!              do i=1,Nx
+      do j=1,Ny
+         do i=1,Nx
+!            if(((i-(Nx/4))*(i-(Nx/4))+(j-(Ny/4))*(j-(Ny/4)))
+!     .       .le. 25)then
 
-!          do j=(Ny/4-5),(Ny/4+5)
-!              do i=(Nx/4-5),(Nx/4+5)
-!         if(((i-(Nx/4))*(i-(Nx/4))+(j-(Ny/4))*(j-(Ny/4))) .le. 25)then
+            if(((i-(2*Nx/5))*(i-(2*Nx/5))+(j-(2*Ny/5))*(j-(2*Ny/5)))
+     .       .le. 25)then
 
-          do j=(Ny/2-5),(Ny/2+5)
-              do i=(Nx/2-5),(Nx/2+5)
-         if(((i-(Nx/2))*(i-(Nx/2))+(j-(Ny/2))*(j-(Ny/2))) .le. 25)then
+!            if(((i-(Nx/2))*(i-(Nx/2))+(j-(Ny/2))*(j-(Ny/2)))
+!     .       .le. 25)then
 
 
-                    if(grid(i,j) .gt. 0.5)then
-                        factor=1.0
-                    else
-                        factor=0.0
-                    endif
-                  gamma(i,j)=factor*(gamma0(1)+7)
-                  endif
-              enddo
-          enddo
+               if(grid(i,j) .gt. 0.5)then
+                  factor=1.0
+               else
+                  factor=0.0
+               endif
+               gamma(i,j)=factor*(gamma0(1)+7)
+            endif
+         enddo
+      enddo
 
 
 
